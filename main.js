@@ -1,18 +1,18 @@
 const canvas = document.querySelector("canvas"),
 toolBtns = document.querySelectorAll(".tool"),
- fillColor = document.querySelector("#fill-color"),
- sizeSlider = document.querySelector("#size-slider"),
+fillColor = document.querySelector("#fill-color"),
+sizeSlider = document.querySelector("#size-slider"),
 colorBtns = document.querySelectorAll(".colors .option"),
-    colorPicker = document.querySelector("#color-picker"),
-    clearCanvas = document.querySelector(".clear-canvas"),
-    saveImg = document.querySelector(".save-img"),
-    ctx = canvas.getContext("2d");
+colorPicker = document.querySelector("#color-picker"),
+clearCanvas = document.querySelector(".clear-canvas"),
+saveImg = document.querySelector(".save-img"),
+ctx = canvas.getContext("2d");
 
-    let prevMouseX, prevMouseY, snapshot,
-    isDrawing = false,
-    selectedTool = "brush",
-    brushWidth = 5,
-    selectedColor = "#000";
+let prevMouseX, prevMouseY, snapshot,
+isDrawing = false,
+selectedTool = "brush",
+brushWidth = 5,
+selectedColor = "#000";
 // Helper function to convert RGB to HEX
 function rgbToHex(rgb) {
   const rgbArray = rgb.match(/\d+/g).map(Number);
@@ -39,25 +39,23 @@ const colorSoundMap = {
 };
 //When user clicks a color button
 colorBtns.forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelector(".options .selected")?.classList.remove("selected");
-    btn.classList.add("selected");
-
-    const bgColor = window.getComputedStyle(btn).backgroundColor;
-    const hexColor = rgbToHex(bgColor);
-    selectedColor = hexColor;
-
-    const note = colorSoundMap[hexColor];
-    if (note && synth) {
-      synth.triggerAttackRelease(note, "8n");
-    } else {
-      // Optional fallback sound if color is not mapped
-      synth.triggerAttackRelease("B4", "8n");
-    }
-  });
+btn.addEventListener("click", () => {
+ document.querySelector(".options .selected")?.classList.remove("selected");
+btn.classList.add("selected");
+const bgColor = window.getComputedStyle(btn).backgroundColor;
+const hexColor = rgbToHex(bgColor);
+selectedColor = hexColor;
+ const note = colorSoundMap[hexColor];
+  if (note && synth) {
+ synth.triggerAttackRelease(note, "8n");
+ } else {
+   // Optional fallback sound if color is not mapped
+   synth.triggerAttackRelease("B4", "8n");
+}
 });
-let synth, clickSynth, eraseSynth, drawSynth, clearSynth, saveSynth; // Declare synths globally
-
+});
+// Declaring the synths 
+let synth, clickSynth, eraseSynth, drawSynth, clearSynth, saveSynth; 
 //Track which notes are active for smoother release
 let drawNote = "C4";
 let isDrawNotePlaying = false;
@@ -68,7 +66,7 @@ console.log("Tone.js audio context started");
 synth = new Tone.Synth().toDestination();
  clickSynth = new Tone.MembraneSynth().toDestination();
 
-    //Erase: use NoiseSynth with envelope
+//Erase Sound
 eraseSynth = new Tone.NoiseSynth({
  envelope: { attack: 0.01, decay: 0.3, sustain: 0.2,
 //smoother release
@@ -82,11 +80,26 @@ oscillator: { type: "sine" },
 envelope: {
 attack: 0.05, decay: 0.2, sustain: 0.5,
 release: 1 },
-volume: -10
-    }).toDestination();
+volume: 5
+   }).toDestination();
 clearSynth = new Tone.MetalSynth({ volume: -15 }).toDestination();
 saveSynth = new Tone.Synth({ oscillator: { type: "sine" } }).toDestination();
 }, { once: true });
+fillSynth = new Tone.Synth({
+    oscillator: { type: "triangle" },
+    envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.2 },
+    volume: -12
+  }).toDestination();
+
+  //fillcheckbox sound effect
+  fillColor.addEventListener("change", () => {
+ if (fillColor.checked) {
+   fillSynth.triggerAttackRelease("C5", "8n"); 
+    } else {
+  fillSynth.triggerAttackRelease("G4", "8n"); 
+    }
+  });
+
 //button sound
 //const buttonSound = new Audio('sounds/click.mp3'); 
 //buttonSound.load();
@@ -104,28 +117,26 @@ synth.triggerAttackRelease(note, "16n");}
 });
 //Color selection with sound
 colorBtns.forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelector(".options .selected")?.classList.remove("selected");
-    btn.classList.add("selected");
-    const bgColor = window.getComputedStyle(btn).backgroundColor;
-    selectedColor = rgbToHex(bgColor);
-
-    //Play colour-specific sound
-    const note = colorSoundMap[selectedColor];
-    if (note && synth) synth.triggerAttackRelease(note, "8n");
-  });
+btn.addEventListener("click", () => {
+document.querySelector(".options .selected")?.classList.remove("selected");
+btn.classList.add("selected");
+const bgColor = window.getComputedStyle(btn).backgroundColor;
+selectedColor = rgbToHex(bgColor);
+//Play colour-specific sound
+   const note = colorSoundMap[selectedColor];
+  if (note && synth) synth.triggerAttackRelease(note, "8n");
+});
 });
 //Custom color picker
 colorPicker.addEventListener("change", () => {
-  selectedColor = colorPicker.value.toLowerCase();
-  colorBtns[colorBtns.length - 1].style.background = selectedColor;
-  colorBtns.forEach(btn => btn.classList.remove("selected"));
-  colorBtns[colorBtns.length - 1].classList.add("selected");
-
-  const note = colorSoundMap[selectedColor];
-  if (note) {
-    synth.triggerAttackRelease(note, "8n");
-  } else {
+selectedColor = colorPicker.value.toLowerCase();
+colorBtns[colorBtns.length - 1].style.background = selectedColor;
+colorBtns.forEach(btn => btn.classList.remove("selected"));
+colorBtns[colorBtns.length - 1].classList.add("selected");
+const note = colorSoundMap[selectedColor];
+if (note) {
+synth.triggerAttackRelease(note, "8n");
+} else {
     synth.triggerAttackRelease("A4", "8n"); //custom colors
   }
 });
@@ -162,7 +173,7 @@ const drawCircle = (e) => {
     // Play sound for this tool
     const note = toolSoundMap[selectedTool];
     if (note && synth) synth.triggerAttackRelease(note, "8n");
-  });
+});
 });
 };
 //triangle
@@ -176,32 +187,31 @@ const drawTriangle = (e) => {
 //Start drawing
 const startDraw = (e) => {
  isDrawing = true;
-    prevMouseX = e.offsetX;
-    prevMouseY = e.offsetY;
-    ctx.beginPath();
-    ctx.lineWidth = brushWidth;
+  prevMouseX = e.offsetX;
+  prevMouseY = e.offsetY;
+  ctx.beginPath();
+  ctx.lineWidth = brushWidth;
   ctx.strokeStyle = selectedColor;
-    ctx.fillStyle = selectedColor;
+   ctx.fillStyle = selectedColor;
 snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
     if (selectedTool === "eraser") {
-        eraseSynth?.triggerAttack();
+       eraseSynth?.triggerAttack();
     } else {
-        drawSynth?.triggerAttack(drawNote);
-        isDrawNotePlaying = true; }};
+    drawSynth?.triggerAttack(drawNote);
+    isDrawNotePlaying = true; }};
 //Draw while mouse is moving
 const drawing = (e) => {
-    if (!isDrawing) return;
-    ctx.putImageData(snapshot, 0, 0);
-
-    if (selectedTool === "brush" || selectedTool === "eraser") {
-        ctx.strokeStyle = selectedTool === "eraser" ? "#fff" : selectedColor;
-        ctx.lineTo(e.offsetX, e.offsetY);
-        ctx.stroke();
+if (!isDrawing) return;
+  ctx.putImageData(snapshot, 0, 0);
+ if (selectedTool === "brush" || selectedTool === "eraser") {
+ ctx.strokeStyle = selectedTool === "eraser" ? "#fff" : selectedColor;
+  ctx.lineTo(e.offsetX, e.offsetY);
+ ctx.stroke();
  } else if (selectedTool === "rectangle") {
 drawRect(e);
 } else if (selectedTool === "circle") {
-        drawCircle(e);
+ drawCircle(e);
  } else if (selectedTool === "triangle") {
  drawTriangle(e);
     }};
@@ -210,36 +220,33 @@ const stopDraw = () => {
     if (!isDrawing) return;
     isDrawing = false;
     if (selectedTool === "eraser") {
-        eraseSynth?.triggerRelease();
+    eraseSynth?.triggerRelease();
     } else if (isDrawNotePlaying) {
  drawSynth?.triggerRelease(drawNote);
  isDrawNotePlaying = false; }};
 //handle tool selection
 toolBtns.forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelector(".options .active")?.classList.remove("active");
-    btn.classList.add("active");
-    selectedTool = btn.id;
-
-    const note = toolSoundMap[selectedTool];
-    if (note && synth) synth.triggerAttackRelease(note, "8n");
+ btn.addEventListener("click", () => {
+  document.querySelector(".options .active")?.classList.remove("active");
+  btn.classList.add("active");
+  selectedTool = btn.id;
+ const note = toolSoundMap[selectedTool];
+if (note && synth) synth.triggerAttackRelease(note, "8n");
   });
 });
 
 //Play the button sound
-      //  buttonSound.currentTime = 0;
-       // buttonSound.play();
-
+ //buttonSound.currentTime = 0;
+ // buttonSound.play();
 //Handle brush size
 let sliderSynth;
-
 document.body.addEventListener("click", async () => {
-    await Tone.start();
-    console.log("Tone.js audio context started");
+await Tone.start();
+console.log("Tone.js audio context started");
 
 //Play the button sound
-    buttonSound.currentTime = 0;
-    buttonSound.play();});
+ buttonSound.currentTime = 0;
+  buttonSound.play();});
 //Handle color selection
 colorBtns.forEach(btn => {
 btn.addEventListener("click", () => {
@@ -248,16 +255,15 @@ btn.classList.add("selected");
 selectedColor = window.getComputedStyle(btn).getPropertyValue("background-color");
 
 buttonSound.currentTime = 0;
-        buttonSound.play();// Play the button sound
-    });
+buttonSound.play();// Play the button sound
+  });
 });
 
 colorPicker.addEventListener("change", () => {
-    colorPicker.parentElement.classList.add("selected");
-    selectedColor = colorPicker.value;
-
-    buttonSound.currentTime = 0;
-    buttonSound.play();// Play the button sound
+ colorPicker.parentElement.classList.add("selected");
+selectedColor = colorPicker.value;
+buttonSound.currentTime = 0;
+buttonSound.play();// Play the button sound
 });
 //Clear canvas
 clearCanvas.addEventListener("click", () => {
@@ -283,6 +289,12 @@ document.querySelector("h1")?.addEventListener("click", () => {
 });
 document.querySelector("h2")?.addEventListener("click", () => {
   synth?.triggerAttackRelease("A3", "8n");
+});
+fillColor.addEventListener("change", () => {
+  if (fillSynth) {
+  const note = fillColor.checked ? "G3" : "F3"; // Different note for checked/unchecked
+  fillSynth.triggerAttackRelease(note, "8n");
+  }
 });
 //Mouse event bindings
 canvas.addEventListener("mousedown", startDraw);
